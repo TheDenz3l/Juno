@@ -4,7 +4,7 @@ import { useAppStore } from '@/stores/app-store'
 import { ResumeUpload } from '@/components/ResumeUpload'
 import { ATSScoreDisplay } from '@/components/ATSScoreDisplay'
 import { EditSuggestions } from '@/components/EditSuggestions'
-import { generateEditSuggestions, applySuggestion, type EditSuggestion } from '@/lib/edit-suggestions'
+import { generateEditSuggestions, type EditSuggestion } from '@/lib/edit-suggestions'
 import { calculateATSScore } from '@/lib/ats-matcher'
 import { getCurrentUser, getProfile } from '@/lib/supabase'
 

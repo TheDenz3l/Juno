@@ -17,7 +17,7 @@ chrome.sidePanel
   .catch((error) => console.error(error))
 
 // Listen for messages from content scripts
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   console.log('Message received in background:', message)
 
   if (message.type === 'JOB_DETECTED') {

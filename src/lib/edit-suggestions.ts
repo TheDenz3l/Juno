@@ -8,15 +8,15 @@ export interface EditSuggestion {
   confidence: number // 0-1
 }
 
-// Strong action verbs for resumes
-const ACTION_VERBS = {
-  leadership: ['led', 'managed', 'directed', 'coordinated', 'supervised', 'mentored', 'trained'],
-  achievement: ['achieved', 'exceeded', 'delivered', 'accomplished', 'attained', 'completed'],
-  improvement: ['improved', 'enhanced', 'optimized', 'streamlined', 'increased', 'reduced'],
-  creation: ['created', 'developed', 'designed', 'built', 'implemented', 'established'],
-  analysis: ['analyzed', 'evaluated', 'assessed', 'measured', 'researched', 'investigated'],
-  collaboration: ['collaborated', 'partnered', 'coordinated', 'facilitated', 'supported']
-}
+// Strong action verbs for resumes (reserved for future use)
+// const ACTION_VERBS = {
+//   leadership: ['led', 'managed', 'directed', 'coordinated', 'supervised', 'mentored', 'trained'],
+//   achievement: ['achieved', 'exceeded', 'delivered', 'accomplished', 'attained', 'completed'],
+//   improvement: ['improved', 'enhanced', 'optimized', 'streamlined', 'increased', 'reduced'],
+//   creation: ['created', 'developed', 'designed', 'built', 'implemented', 'established'],
+//   analysis: ['analyzed', 'evaluated', 'assessed', 'measured', 'researched', 'investigated'],
+//   collaboration: ['collaborated', 'partnered', 'coordinated', 'facilitated', 'supported']
+// }
 
 // Weak verbs to replace
 const WEAK_VERBS = [

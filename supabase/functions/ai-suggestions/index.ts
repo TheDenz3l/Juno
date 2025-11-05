@@ -171,7 +171,7 @@ Return format:
       'HTTP-Referer': SUPABASE_URL,
     },
     body: JSON.stringify({
-      model: 'minimax/minimax-01',
+      model: 'minimax/minimax-m2:free',
       messages: [
         {
           role: 'system',

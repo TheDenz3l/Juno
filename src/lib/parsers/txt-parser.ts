@@ -1,43 +1,24 @@
-import * as pdfjsLib from 'pdfjs-dist'
 import { Resume, ContactSection, ExperienceItem, EducationItem } from '@/types'
-
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdfjs-dist/build/pdf.worker.min.mjs')
 
 interface ParsedResume {
   rawText: string
   sections: Resume['sections']
 }
 
-export async function parsePDF(file: File): Promise<ParsedResume> {
+export async function parseTXT(file: File): Promise<ParsedResume> {
   try {
-    const arrayBuffer = await file.arrayBuffer()
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-
-    let fullText = ''
-
-    // Extract text from all pages
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum)
-      const textContent = await page.getTextContent()
-
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ')
-
-      fullText += pageText + '\n'
-    }
+    const text = await file.text()
 
     // Parse sections from text
-    const sections = parseResumeText(fullText)
+    const sections = parseResumeText(text)
 
     return {
-      rawText: fullText,
+      rawText: text,
       sections,
     }
   } catch (error) {
-    console.error('PDF parsing error:', error)
-    throw new Error('Failed to parse PDF. Please check the file and try again.')
+    console.error('TXT parsing error:', error)
+    throw new Error('Failed to parse text file. Please check the file and try again.')
   }
 }
 

@@ -119,8 +119,8 @@ Copy from **Developers** → **API keys**:
 2. Sign up / Sign in
 3. Go to **Keys**
 4. Create a new API key
-5. Add credits to your account ($5-10 to start)
-6. Model: We're using `minimax/minimax-01`
+5. Add credits to your account (or use free tier)
+6. Model: We're using `minimax/minimax-m2:free` (free tier with rate limits)
 
 ---
 

@@ -1,5 +1,6 @@
 import { parsePDF } from './pdf-parser'
 import { parseDOCX } from './docx-parser'
+import { parseTXT } from './txt-parser'
 import { Resume } from '@/types'
 
 export async function parseResumeFile(file: File): Promise<Resume> {
@@ -15,14 +16,16 @@ export async function parseResumeFile(file: File): Promise<Resume> {
     fileName.endsWith('.docx')
   ) {
     parsedData = await parseDOCX(file)
+  } else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+    parsedData = await parseTXT(file)
   } else {
-    throw new Error('Unsupported file type. Please upload a PDF or DOCX file.')
+    throw new Error('Unsupported file type. Please upload a PDF, DOCX, or TXT file.')
   }
 
   // Create Resume object
   const resume: Resume = {
     id: generateId(),
-    name: fileName.replace(/\.(pdf|docx)$/i, ''),
+    name: fileName.replace(/\.(pdf|docx|txt)$/i, ''),
     content: parsedData.rawText,
     sections: parsedData.sections,
     createdAt: new Date(),

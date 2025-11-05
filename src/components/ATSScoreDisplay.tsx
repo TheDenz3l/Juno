@@ -1,5 +1,5 @@
 import { ATSScore } from '@/types'
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   score: ATSScore | null
