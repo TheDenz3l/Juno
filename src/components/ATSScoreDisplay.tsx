@@ -1,12 +1,14 @@
 import { ATSScore } from '@/types'
-import { TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, AlertCircle, CheckCircle2, Highlighter } from 'lucide-react'
 
 interface Props {
   score: ATSScore | null
   isCalculating?: boolean
+  onToggleHighlighting?: () => void
+  isHighlightingEnabled?: boolean
 }
 
-export function ATSScoreDisplay({ score, isCalculating }: Props) {
+export function ATSScoreDisplay({ score, isCalculating, onToggleHighlighting, isHighlightingEnabled }: Props) {
   if (isCalculating) {
     return (
       <div className="card">
@@ -53,7 +55,23 @@ export function ATSScoreDisplay({ score, isCalculating }: Props) {
 
   return (
     <div className="card">
-      <h2 className="text-lg font-semibold mb-4">ATS Match Score</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold">ATS Match Score</h2>
+        {onToggleHighlighting && (
+          <button
+            onClick={onToggleHighlighting}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              isHighlightingEnabled
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title={isHighlightingEnabled ? 'Hide keyword highlights' : 'Show keyword highlights on page'}
+          >
+            <Highlighter className="w-4 h-4" />
+            {isHighlightingEnabled ? 'Hide' : 'Show'} Highlights
+          </button>
+        )}
+      </div>
 
       {/* Score Circle */}
       <div className="flex items-center justify-center mb-6">

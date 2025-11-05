@@ -84,6 +84,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         activeResumeId: resume.id,
         isLoading: false
       }))
+      // Persist activeResumeId to chrome.storage
+      chrome.storage.local.set({ activeResumeId: resume.id })
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
     }
@@ -102,17 +104,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setActiveResume: (id) => set({ activeResumeId: id }),
+  setActiveResume: (id) => {
+    set({ activeResumeId: id })
+    // Persist activeResumeId to chrome.storage
+    chrome.storage.local.set({ activeResumeId: id })
+  },
 
   deleteResume: async (id) => {
     try {
       set({ isLoading: true, error: null })
       await deleteResumeDB(id)
+      const wasActive = get().activeResumeId === id
       set(state => ({
         resumes: state.resumes.filter(r => r.id !== id),
         activeResumeId: state.activeResumeId === id ? null : state.activeResumeId,
         isLoading: false
       }))
+      // Clear from chrome.storage if this was the active resume
+      if (wasActive) {
+        chrome.storage.local.set({ activeResumeId: null })
+      }
     } catch (error) {
       set({ error: (error as Error).message, isLoading: false })
     }

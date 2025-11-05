@@ -52,7 +52,12 @@ export default defineConfig({
         },
         content_scripts: [
           {
-            matches: ['https://*.indeed.com/*/viewjob*', 'https://*.indeed.com/viewjob*'],
+            matches: [
+              'https://*.indeed.com/*/viewjob*',
+              'https://*.indeed.com/viewjob*',
+              'https://*.indeed.com/*rc/clk*',
+              'https://*.indeed.com/jobs*'
+            ],
             js: ['src/content/indeed.js'],
             run_at: 'document_idle'
           }

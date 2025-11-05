@@ -1,8 +1,27 @@
 import * as pdfjsLib from 'pdfjs-dist'
 import { Resume, ContactSection, ExperienceItem, EducationItem } from '@/types'
 
-// Set up PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdfjs-dist/build/pdf.worker.min.mjs')
+// Set up PDF.js worker with proper error handling
+let pdfWorkerInitialized = false
+
+function initializePDFWorker() {
+  if (pdfWorkerInitialized) return true
+
+  try {
+    if (typeof chrome !== 'undefined' && chrome?.runtime?.getURL) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL('pdfjs-dist/build/pdf.worker.min.mjs')
+      pdfWorkerInitialized = true
+      console.log('PDF.js worker initialized successfully')
+      return true
+    } else {
+      console.error('Chrome runtime not available for PDF worker')
+      return false
+    }
+  } catch (error) {
+    console.error('Failed to initialize PDF worker:', error)
+    return false
+  }
+}
 
 interface ParsedResume {
   rawText: string
@@ -11,6 +30,11 @@ interface ParsedResume {
 
 export async function parsePDF(file: File): Promise<ParsedResume> {
   try {
+    // Initialize PDF worker before parsing
+    if (!initializePDFWorker()) {
+      throw new Error('PDF worker failed to initialize. Extension may need to be reloaded.')
+    }
+
     const arrayBuffer = await file.arrayBuffer()
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
@@ -37,7 +61,8 @@ export async function parsePDF(file: File): Promise<ParsedResume> {
     }
   } catch (error) {
     console.error('PDF parsing error:', error)
-    throw new Error('Failed to parse PDF. Please check the file and try again.')
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    throw new Error(`Failed to parse PDF: ${errorMessage}. Please check the file and try again.`)
   }
 }
 

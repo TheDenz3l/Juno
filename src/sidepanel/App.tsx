@@ -22,6 +22,9 @@ function App() {
   const [isCalculatingATS, setIsCalculatingATS] = useState(false)
   const [applyingSuggestions, setApplyingSuggestions] = useState<Set<string>>(new Set())
 
+  // Keyword highlighting state
+  const [isHighlightingEnabled, setIsHighlightingEnabled] = useState(false)
+
   const {
     user,
     setUser,
@@ -51,14 +54,21 @@ function App() {
           loadJobPostings()
         ])
 
-        // Load current job from chrome.storage after initialization
-        chrome.storage.local.get(['currentJob'], (result) => {
+        // Load current job and activeResumeId from chrome.storage after initialization
+        chrome.storage.local.get(['currentJob', 'activeResumeId'], (result) => {
           if (chrome.runtime.lastError) {
-            console.error('Failed to load current job:', chrome.runtime.lastError)
+            console.error('Failed to load from storage:', chrome.runtime.lastError)
             return
           }
           if (result.currentJob) {
             setCurrentJob(result.currentJob)
+          }
+          if (result.activeResumeId) {
+            // Verify resume still exists in IndexedDB before setting as active
+            const resumeExists = useAppStore.getState().resumes.find(r => r.id === result.activeResumeId)
+            if (resumeExists) {
+              useAppStore.getState().setActiveResume(result.activeResumeId)
+            }
           }
         })
       } catch (error) {
@@ -79,14 +89,39 @@ function App() {
     }
   }
 
+  // Auto-select resume if none active but resumes exist
+  useEffect(() => {
+    if (!activeResumeId && resumes.length > 0) {
+      // Auto-select the most recently updated resume
+      const mostRecent = [...resumes].sort((a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )[0]
+      if (mostRecent) {
+        console.log('Auto-selecting most recent resume:', mostRecent.name)
+        useAppStore.getState().setActiveResume(mostRecent.id)
+      }
+    }
+  }, [resumes, activeResumeId])
+
   // Listen for job data updates from background script
   useEffect(() => {
     const handleStorageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
-      if (areaName === 'local' && changes.currentJob) {
-        const newJob = changes.currentJob.newValue
-        if (newJob) {
-          console.log('Job data updated in storage:', newJob)
-          setCurrentJob(newJob)
+      if (areaName === 'local') {
+        if (changes.currentJob) {
+          const newJob = changes.currentJob.newValue
+          if (newJob) {
+            console.log('Job data updated in storage:', newJob)
+            setCurrentJob(newJob)
+          }
+        }
+
+        // Handle activeResumeId changes
+        if (changes.activeResumeId) {
+          const newActiveId = changes.activeResumeId.newValue
+          if (newActiveId) {
+            console.log('Active resume ID updated in storage:', newActiveId)
+            useAppStore.getState().setActiveResume(newActiveId)
+          }
         }
       }
     }
@@ -316,6 +351,33 @@ function App() {
     setEditSuggestions(prev => prev.filter(s => s.id !== suggestion.id))
   }
 
+  const handleToggleHighlighting = async () => {
+    const newEnabled = !isHighlightingEnabled
+
+    try {
+      // Send message to background script to toggle highlighting
+      const response = await chrome.runtime.sendMessage({
+        type: 'TOGGLE_KEYWORD_HIGHLIGHTING',
+        data: {
+          enabled: newEnabled,
+          matchedKeywords: atsScore?.matchedKeywords || [],
+          missedKeywords: atsScore?.missingKeywords || []
+        }
+      })
+
+      if (response?.success) {
+        setIsHighlightingEnabled(newEnabled)
+        console.log('Highlighting toggled:', newEnabled)
+      } else {
+        console.error('Failed to toggle highlighting:', response?.error)
+        setError(response?.error || 'Failed to toggle highlighting')
+      }
+    } catch (error) {
+      console.error('Error toggling highlighting:', error)
+      setError((error as Error).message)
+    }
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
@@ -412,7 +474,12 @@ function App() {
         {activeTab === 'optimize' && (
           <div className="space-y-4 max-w-4xl mx-auto">
             <ResumeUpload />
-            <ATSScoreDisplay score={atsScore} isCalculating={isCalculatingATS} />
+            <ATSScoreDisplay
+              score={atsScore}
+              isCalculating={isCalculatingATS}
+              onToggleHighlighting={handleToggleHighlighting}
+              isHighlightingEnabled={isHighlightingEnabled}
+            />
 
             {/* Track Application Button */}
             {currentJob && activeResumeId && (
