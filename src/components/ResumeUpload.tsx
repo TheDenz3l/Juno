@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Upload, FileText, AlertCircle } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, Trash2 } from 'lucide-react'
 import { parseResumeFile } from '@/lib/parsers'
 import { useAppStore } from '@/stores/app-store'
 
@@ -7,11 +7,18 @@ export function ResumeUpload() {
   const [isDragging, setIsDragging] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
 
   const addResume = useAppStore(state => state.addResume)
+  const deleteResume = useAppStore(state => state.deleteResume)
+  const resumes = useAppStore(state => state.resumes)
+  const activeResumeId = useAppStore(state => state.activeResumeId)
+
+  const activeResume = resumes.find(r => r.id === activeResumeId)
 
   const handleFile = useCallback(async (file: File) => {
     setUploadError(null)
+    setUploadSuccess(false)
     setIsUploading(true)
 
     try {
@@ -42,6 +49,10 @@ export function ResumeUpload() {
       await addResume(resume)
 
       console.log('Resume uploaded successfully:', resume.name)
+
+      // Show success message
+      setUploadSuccess(true)
+      setTimeout(() => setUploadSuccess(false), 3000)
     } catch (error) {
       console.error('Upload error:', error)
       setUploadError((error as Error).message)
@@ -49,6 +60,12 @@ export function ResumeUpload() {
       setIsUploading(false)
     }
   }, [addResume])
+
+  const handleDelete = useCallback(async (resumeId: string) => {
+    if (confirm('Are you sure you want to delete this resume?')) {
+      await deleteResume(resumeId)
+    }
+  }, [deleteResume])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -80,6 +97,40 @@ export function ResumeUpload() {
   return (
     <div className="card">
       <h2 className="text-lg font-semibold mb-4">Upload Resume</h2>
+
+      {/* Active Resume Display */}
+      {activeResume && (
+        <div className="mb-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1">
+              <CheckCircle className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-primary-900 truncate">
+                  {activeResume.name}
+                </p>
+                <p className="text-xs text-primary-700 mt-1">
+                  Uploaded {new Date(activeResume.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => handleDelete(activeResume.id)}
+              className="p-1 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded transition-colors"
+              title="Delete resume"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {uploadSuccess && (
+        <div className="mb-4 p-3 bg-success-50 border border-success-200 rounded-lg flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-success-600 flex-shrink-0" />
+          <p className="text-sm font-medium text-success-800">Resume uploaded successfully!</p>
+        </div>
+      )}
 
       <div
         onDrop={handleDrop}

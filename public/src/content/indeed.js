@@ -3,18 +3,22 @@ console.log('Juno content script loaded on Indeed')
 
 // Detect if we're on a job posting page
 function detectJobPosting() {
-  // Check URL pattern
+  // Check URL pattern - now includes search results page
   const isJobPage = window.location.href.includes('/viewjob') ||
-                     window.location.href.includes('/rc/clk')
+                     window.location.href.includes('/rc/clk') ||
+                     window.location.href.includes('/jobs')
 
   if (!isJobPage) return null
 
   // Try to extract job description
+  // Updated selectors to include search results page format
   const jobDescriptionSelectors = [
     '#jobDescriptionText',
     '.jobsearch-jobDescriptionText',
     '[id*="jobDesc"]',
-    '[class*="jobDesc"]'
+    '[class*="jobDesc"]',
+    '.jobsearch-RightPane #jobDescriptionText', // Search results page
+    '.jobsearch-RightPane .jobsearch-jobDescriptionText' // Search results page
   ]
 
   let jobDescription = ''
@@ -33,7 +37,10 @@ function detectJobPosting() {
   const titleSelectors = [
     '.jobsearch-JobInfoHeader-title',
     'h1[class*="jobTitle"]',
-    'h1'
+    'h2[class*="jobTitle"]', // Search results page often uses h2
+    '.jobTitle',
+    'h1',
+    'h2.jobTitle'
   ]
 
   for (const selector of titleSelectors) {
@@ -48,9 +55,13 @@ function detectJobPosting() {
   let companyName = ''
   const companySelectors = [
     '[data-testid="inlineHeader-companyName"]',
+    '[data-testid="company-name"]',
     '.jobsearch-InlineCompanyRating',
     '[data-company-name]',
-    '.icl-u-lg-mr--sm.icl-u-xs-mr--xs'
+    '.icl-u-lg-mr--sm.icl-u-xs-mr--xs',
+    '.companyName',
+    '[data-testid="inlineHeader-companyName"] a',
+    '[data-testid="inlineHeader-companyName"] span'
   ]
 
   for (const selector of companySelectors) {
@@ -169,12 +180,39 @@ if (document.readyState === 'loading') {
   init()
 }
 
-// Re-run if URL changes (SPA navigation)
+// Re-run if URL changes (SPA navigation) or job details panel changes
 let lastUrl = location.href
-new MutationObserver(() => {
-  const url = location.href
-  if (url !== lastUrl) {
-    lastUrl = url
-    init()
-  }
-}).observe(document, { subtree: true, childList: true })
+let lastJobTitle = ''
+
+// Debounce function to avoid excessive calls
+let debounceTimer
+function debounceInit() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    const url = location.href
+
+    // Check if URL changed
+    if (url !== lastUrl) {
+      lastUrl = url
+      init()
+      return
+    }
+
+    // On search results page, check if job details changed
+    if (url.includes('/jobs')) {
+      const titleElement = document.querySelector('h2[class*="jobTitle"], .jobTitle, h1[class*="jobTitle"]')
+      const currentTitle = titleElement?.textContent?.trim() || ''
+
+      if (currentTitle && currentTitle !== lastJobTitle) {
+        lastJobTitle = currentTitle
+        console.log('Job selection changed, re-detecting...', currentTitle)
+        init()
+      }
+    }
+  }, 500) // Wait 500ms after last change
+}
+
+new MutationObserver(debounceInit).observe(document, {
+  subtree: true,
+  childList: true
+})
