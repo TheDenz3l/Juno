@@ -6,9 +6,10 @@ interface Props {
   suggestions: EditSuggestion[]
   onAccept: (suggestion: EditSuggestion) => void
   onReject: (suggestion: EditSuggestion) => void
+  applyingSuggestions?: Set<string>
 }
 
-export function EditSuggestions({ suggestions, onAccept, onReject }: Props) {
+export function EditSuggestions({ suggestions, onAccept, onReject, applyingSuggestions = new Set() }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   if (suggestions.length === 0) {
@@ -117,14 +118,24 @@ export function EditSuggestions({ suggestions, onAccept, onReject }: Props) {
             <div className="flex gap-2">
               <button
                 onClick={() => onAccept(suggestion)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+                disabled={applyingSuggestions.has(suggestion.id)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm ${
+                  applyingSuggestions.has(suggestion.id)
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                }`}
               >
                 <Check className="w-4 h-4" />
-                Accept
+                {applyingSuggestions.has(suggestion.id) ? 'Applying...' : 'Accept'}
               </button>
               <button
                 onClick={() => onReject(suggestion)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                disabled={applyingSuggestions.has(suggestion.id)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm ${
+                  applyingSuggestions.has(suggestion.id)
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
               >
                 <X className="w-4 h-4" />
                 Reject

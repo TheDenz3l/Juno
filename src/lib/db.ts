@@ -23,11 +23,17 @@ const DB_NAME = 'juno-db'
 const DB_VERSION = 1
 
 let dbInstance: IDBPDatabase<JunoDB> | null = null
+let dbPromise: Promise<IDBPDatabase<JunoDB>> | null = null
+let dbInitCount = 0
 
 export async function initDB(): Promise<IDBPDatabase<JunoDB>> {
   if (dbInstance) return dbInstance
+  if (dbPromise) return dbPromise
 
-  dbInstance = await openDB<JunoDB>(DB_NAME, DB_VERSION, {
+  dbInitCount++
+  const currentInit = dbInitCount
+
+  dbPromise = openDB<JunoDB>(DB_NAME, DB_VERSION, {
     upgrade(db) {
       // Resumes store
       if (!db.objectStoreNames.contains('resumes')) {
@@ -51,7 +57,19 @@ export async function initDB(): Promise<IDBPDatabase<JunoDB>> {
     },
   })
 
-  return dbInstance
+  try {
+    dbInstance = await dbPromise
+    return dbInstance
+  } catch (error) {
+    // Reset on error to allow retry
+    dbPromise = null
+    throw error
+  } finally {
+    // Only clear dbPromise if no new init started while we were initializing
+    if (currentInit === dbInitCount) {
+      dbPromise = null
+    }
+  }
 }
 
 // Resume operations

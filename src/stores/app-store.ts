@@ -33,6 +33,7 @@ interface AppState {
   setUser: (user: User | null) => void
   loadResumes: () => Promise<void>
   addResume: (resume: Resume) => Promise<void>
+  updateResume: (resume: Resume) => Promise<void>
   setActiveResume: (id: string) => void
   deleteResume: (id: string) => Promise<void>
 
@@ -81,6 +82,19 @@ export const useAppStore = create<AppState>((set, get) => ({
       set(state => ({
         resumes: [...state.resumes, resume],
         activeResumeId: resume.id,
+        isLoading: false
+      }))
+    } catch (error) {
+      set({ error: (error as Error).message, isLoading: false })
+    }
+  },
+
+  updateResume: async (resume) => {
+    try {
+      set({ isLoading: true, error: null })
+      await saveResumeDB(resume)
+      set(state => ({
+        resumes: state.resumes.map(r => r.id === resume.id ? resume : r),
         isLoading: false
       }))
     } catch (error) {

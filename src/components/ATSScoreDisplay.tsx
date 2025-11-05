@@ -3,11 +3,11 @@ import { TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   score: ATSScore | null
-  isLoading?: boolean
+  isCalculating?: boolean
 }
 
-export function ATSScoreDisplay({ score, isLoading }: Props) {
-  if (isLoading) {
+export function ATSScoreDisplay({ score, isCalculating }: Props) {
+  if (isCalculating) {
     return (
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">ATS Match Score</h2>
