@@ -20,6 +20,7 @@ function App() {
   // Loading states
   const [isTracking, setIsTracking] = useState(false)
   const [isCalculatingATS, setIsCalculatingATS] = useState(false)
+  const [atsCalculationStatus, setATSCalculationStatus] = useState<string>('')
   const [applyingSuggestions, setApplyingSuggestions] = useState<Set<string>>(new Set())
 
   // Keyword highlighting state
@@ -190,16 +191,19 @@ function App() {
       const activeResume = resumes.find(r => r.id === activeResumeId)
       if (activeResume && currentJob && !cancelled) {
         setIsCalculatingATS(true)
+        setATSCalculationStatus('Analyzing job description...')
         try {
-          // Calculate ATS score
-          const score = calculateATSScore(activeResume, currentJob)
+          // Calculate ATS score (now using ML-powered extraction)
+          const score = await calculateATSScore(activeResume, currentJob)
 
           if (!cancelled) {
             setATSScore(score)
+            setATSCalculationStatus('')
           }
 
           // Generate edit suggestions
           if (activeResume.sections.experience && Array.isArray(activeResume.sections.experience) && activeResume.sections.experience.length > 0 && !cancelled) {
+            setATSCalculationStatus('Generating suggestions...')
             const expText = activeResume.sections.experience
               .map(exp => exp.description && Array.isArray(exp.description) ? exp.description.join(' ') : '')
               .filter(text => text.length > 0)
@@ -208,11 +212,17 @@ function App() {
               const suggestions = generateEditSuggestions(expText, 'experience')
               if (!cancelled) {
                 setEditSuggestions(suggestions)
+                setATSCalculationStatus('')
               }
             }
           }
         } catch (error) {
           console.error('Failed to calculate ATS score:', error)
+          if (!cancelled) {
+            setATSCalculationStatus('Error: Using fallback keyword detection')
+            // Clear error status after 5 seconds
+            setTimeout(() => setATSCalculationStatus(''), 5000)
+          }
         } finally {
           if (!cancelled) {
             setIsCalculatingATS(false)
@@ -480,6 +490,7 @@ function App() {
             <ATSScoreDisplay
               score={atsScore}
               isCalculating={isCalculatingATS}
+              calculationStatus={atsCalculationStatus}
               onToggleHighlighting={handleToggleHighlighting}
               isHighlightingEnabled={isHighlightingEnabled}
             />

@@ -4,17 +4,21 @@ import { TrendingUp, AlertCircle, CheckCircle2, Highlighter } from 'lucide-react
 interface Props {
   score: ATSScore | null
   isCalculating?: boolean
+  calculationStatus?: string
   onToggleHighlighting?: () => void
   isHighlightingEnabled?: boolean
 }
 
-export function ATSScoreDisplay({ score, isCalculating, onToggleHighlighting, isHighlightingEnabled }: Props) {
+export function ATSScoreDisplay({ score, isCalculating, calculationStatus, onToggleHighlighting, isHighlightingEnabled }: Props) {
   if (isCalculating) {
     return (
       <div className="card">
         <h2 className="text-lg font-semibold mb-4">ATS Match Score</h2>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="flex flex-col items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+          {calculationStatus && (
+            <p className="text-sm text-gray-600 animate-pulse">{calculationStatus}</p>
+          )}
         </div>
       </div>
     )

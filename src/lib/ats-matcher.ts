@@ -1,4 +1,59 @@
 import { Resume, JobPosting, ATSScore } from '@/types'
+import { getMLExtractor, type MLKeyword } from './ml-keyword-extractor'
+
+// ============================================================================
+// ML-FIRST HYBRID KEYWORD EXTRACTION
+// ============================================================================
+
+let mlExtractorEnabled = true // Can be toggled by user or disabled on error
+
+/**
+ * Try ML-based keyword extraction first, fall back to rule-based if it fails
+ * This provides the best of both worlds: semantic understanding + pattern matching
+ */
+async function extractKeywordsMLFirst(text: string, fallbackToRules: boolean = true): Promise<string[]> {
+  // Try ML extraction first
+  if (mlExtractorEnabled) {
+    try {
+      console.log('[ATS Matcher] Attempting ML-based keyword extraction...')
+      const extractor = getMLExtractor()
+
+      const mlKeywords: MLKeyword[] = await extractor.extractKeywords(text, {
+        topN: 50, // Get more keywords for better coverage
+        timeout: 30000,
+        minScore: 0.3 // Only include semantically relevant keywords
+      })
+
+      if (mlKeywords.length > 0) {
+        console.log(`[ATS Matcher] ML extraction successful: ${mlKeywords.length} keywords found`)
+
+        // Also extract with rules to capture technical terms ML might miss
+        const ruleKeywords = extractKeywordsWithContext(text)
+
+        // Merge ML and rule-based keywords, prioritizing ML scores
+        const mlKeywordSet = new Set(mlKeywords.map(k => normalizeKeyword(k.keyword)))
+        const combined = [
+          ...mlKeywords.map(k => k.keyword),
+          ...ruleKeywords.filter(k => !mlKeywordSet.has(normalizeKeyword(k)))
+        ]
+
+        console.log(`[ATS Matcher] Combined ML + rules: ${combined.length} total keywords`)
+        return combined
+      }
+    } catch (error) {
+      console.warn('[ATS Matcher] ML extraction failed, falling back to rules:', error)
+      mlExtractorEnabled = false // Disable ML for future attempts this session
+    }
+  }
+
+  // Fall back to rule-based extraction
+  if (fallbackToRules) {
+    console.log('[ATS Matcher] Using rule-based keyword extraction')
+    return extractKeywordsWithContext(text)
+  }
+
+  return []
+}
 
 // ============================================================================
 // REQUIREMENT LEVEL DETECTION
@@ -322,11 +377,11 @@ export interface KeywordMatch {
   category: 'hard' | 'soft'
 }
 
-export function calculateATSScore(resume: Resume, job: JobPosting): ATSScore {
-  // Extract keywords from job description with context-awareness
-  const jobKeywords = extractKeywordsWithContext(job.description)
+export async function calculateATSScore(resume: Resume, job: JobPosting): Promise<ATSScore> {
+  // Extract keywords from job description with ML-first hybrid approach
+  const jobKeywords = await extractKeywordsMLFirst(job.description)
 
-  // Extract keywords from resume
+  // Extract keywords from resume (use rule-based for resume for consistency)
   const resumeText = buildResumeText(resume)
   const resumeKeywords = extractKeywords(resumeText)
 
@@ -334,12 +389,24 @@ export function calculateATSScore(resume: Resume, job: JobPosting): ATSScore {
   const { hardSkills: jobHardSkills, softSkills: jobSoftSkills } = categorizeKeywords(jobKeywords)
   const { hardSkills: resumeHardSkills, softSkills: resumeSoftSkills } = categorizeKeywords(resumeKeywords)
 
-  // Calculate matches
+  // Calculate matches with fuzzy matching for better accuracy
   const hardSkillsMatched: string[] = []
   const hardSkillsMissing: string[] = []
 
   jobHardSkills.forEach(skill => {
-    if (resumeHardSkills.some(rs => normalizeKeyword(rs) === normalizeKeyword(skill))) {
+    const skillNormalized = normalizeKeyword(skill)
+    const isMatched = resumeHardSkills.some(rs => {
+      const rsNormalized = normalizeKeyword(rs)
+      // Exact match
+      if (rsNormalized === skillNormalized) return true
+      // Contains match (e.g., "Salesforce CRM" contains "CRM")
+      if (rsNormalized.includes(skillNormalized) || skillNormalized.includes(rsNormalized)) return true
+      // Common synonyms
+      if (areSynonyms(skillNormalized, rsNormalized)) return true
+      return false
+    })
+
+    if (isMatched) {
       hardSkillsMatched.push(skill)
     } else {
       hardSkillsMissing.push(skill)
@@ -350,20 +417,36 @@ export function calculateATSScore(resume: Resume, job: JobPosting): ATSScore {
   const softSkillsMissing: string[] = []
 
   jobSoftSkills.forEach(skill => {
-    if (resumeSoftSkills.some(rs => normalizeKeyword(rs) === normalizeKeyword(skill))) {
+    const skillNormalized = normalizeKeyword(skill)
+    const isMatched = resumeSoftSkills.some(rs => {
+      const rsNormalized = normalizeKeyword(rs)
+      // Exact match
+      if (rsNormalized === skillNormalized) return true
+      // Contains match
+      if (rsNormalized.includes(skillNormalized) || skillNormalized.includes(rsNormalized)) return true
+      // Common synonyms
+      if (areSynonyms(skillNormalized, rsNormalized)) return true
+      return false
+    })
+
+    if (isMatched) {
       softSkillsMatched.push(skill)
     } else {
       softSkillsMissing.push(skill)
     }
   })
 
-  // Calculate score (0-100)
-  const totalJobKeywords = jobHardSkills.length + jobSoftSkills.length
-  const totalMatched = hardSkillsMatched.length + softSkillsMatched.length
+  // Calculate score with weighted importance
+  // Hard skills are more important (60%) than soft skills (40%)
+  const hardSkillScore = jobHardSkills.length > 0
+    ? (hardSkillsMatched.length / jobHardSkills.length) * 60
+    : 30 // If no hard skills specified, give partial credit
 
-  const score = totalJobKeywords > 0
-    ? Math.round((totalMatched / totalJobKeywords) * 100)
-    : 0
+  const softSkillScore = jobSoftSkills.length > 0
+    ? (softSkillsMatched.length / jobSoftSkills.length) * 40
+    : 20 // If no soft skills specified, give partial credit
+
+  const score = Math.round(hardSkillScore + softSkillScore)
 
   // Get top 10 missing keywords
   const allMissing = [...hardSkillsMissing, ...softSkillsMissing]
@@ -785,6 +868,22 @@ function extractKeywords(text: string): string[] {
     // Skip placeholder tokens
     if (normalized === '__removed__' || normalized === 'removed') return
 
+    // CRITICAL: Filter out multi-line blocks and excessively long "keywords"
+    if (keyword.includes('\n') || keyword.length > 50) {
+      return
+    }
+
+    // Filter boilerplate phrases
+    const lowerKeyword = keyword.toLowerCase()
+    const boilerplatePatterns = [
+      'about us', 'we are', 'we offer', 'our company', 'the company',
+      'equal opportunity', 'we celebrate', 'we partner', 'join our',
+      'premium retail solutions', 'flagship location'
+    ]
+    if (boilerplatePatterns.some(p => lowerKeyword.includes(p))) {
+      return
+    }
+
     // Validate the keyword first
     const isPhrase = keyword.includes(' ') || keyword.includes('-')
     const isValid = isPhrase ? isValidPhrase(keyword) : isMeaningfulKeyword(keyword)
@@ -1002,6 +1101,38 @@ function normalizeKeyword(keyword: string): string {
   }
 
   return normalized
+}
+
+// Check if two keywords are synonyms
+function areSynonyms(keyword1: string, keyword2: string): boolean {
+  // Normalize keywords by removing spaces for synonym matching
+  const k1 = keyword1.replace(/\s+/g, '')
+  const k2 = keyword2.replace(/\s+/g, '')
+
+  const synonymMap: { [key: string]: string[] } = {
+    'crm': ['salesforce', 'customerrelationshipmanagement', 'hubspot'],
+    'pos': ['pointofsale', 'cashregister', 'paymentsystem'],
+    'customerservice': ['clientrelations', 'customersupport', 'clientservice', 'customercare'],
+    'leadership': ['teammanagement', 'managing', 'supervising', 'leading'],
+    'communication': ['interpersonal', 'verbal', 'writtencommunication'],
+    'problemsolving': ['troubleshooting', 'analytical', 'criticalthinking'],
+    'sales': ['selling', 'revenuegeneration', 'businessdevelopment'],
+    'retail': ['store', 'shop', 'merchandise'],
+    'inventory': ['stock', 'merchandisemanagement'],
+    'javascript': ['js', 'ecmascript'],
+    'typescript': ['ts'],
+    'python': ['py'],
+    'collaboration': ['teamwork', 'teamplayer', 'cooperative']
+  }
+
+  // Check both directions
+  for (const [key, synonyms] of Object.entries(synonymMap)) {
+    if (k1 === key && synonyms.includes(k2)) return true
+    if (k2 === key && synonyms.includes(k1)) return true
+    if (synonyms.includes(k1) && synonyms.includes(k2)) return true
+  }
+
+  return false
 }
 
 // Deduplicate keywords (handle synonyms and variations)

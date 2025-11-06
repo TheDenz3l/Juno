@@ -18,6 +18,16 @@ export default defineConfig({
         {
           src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
           dest: 'pdfjs-dist/build'
+        },
+        // Copy ONNX Runtime WASM files for Transformers.js
+        {
+          src: 'node_modules/@huggingface/transformers/dist/*.wasm',
+          dest: 'wasm'
+        },
+        // Copy model files from public to dist
+        {
+          src: 'public/models/**/*',
+          dest: 'models'
         }
       ]
     }),
@@ -67,7 +77,7 @@ export default defineConfig({
         },
         web_accessible_resources: [
           {
-            resources: ['icons/*', 'models/*', 'pdfjs-dist/*'],
+            resources: ['icons/*', 'models/*', 'wasm/*', 'pdfjs-dist/*'],
             matches: ['<all_urls>']
           }
         ]
