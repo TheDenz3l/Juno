@@ -193,6 +193,7 @@ function App() {
         try {
           // Calculate ATS score
           const score = calculateATSScore(activeResume, currentJob)
+
           if (!cancelled) {
             setATSScore(score)
           }
@@ -210,6 +211,8 @@ function App() {
               }
             }
           }
+        } catch (error) {
+          console.error('Failed to calculate ATS score:', error)
         } finally {
           if (!cancelled) {
             setIsCalculatingATS(false)

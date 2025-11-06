@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Resume, Application, JobPosting, ATSScore, User } from '@/types'
+import { Resume, Application, JobPosting, User, ATSScore } from '@/types'
 import {
   getAllResumes,
   saveResume as saveResumeDB,
