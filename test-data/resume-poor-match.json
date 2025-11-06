@@ -1,0 +1,58 @@
+{
+  "id": "resume-poor",
+  "name": "Poor Match Resume",
+  "fileName": "poor_match_resume.pdf",
+  "uploadedAt": "2025-11-05T12:00:00Z",
+  "updatedAt": "2025-11-05T12:00:00Z",
+  "sections": {
+    "contact": {
+      "name": "Taylor Martinez",
+      "email": "taylor.m@email.com",
+      "phone": "(555) 456-7890",
+      "location": "Bronx, NY"
+    },
+    "summary": "Hard-working individual seeking entry-level position. Quick learner with good attitude.",
+    "experience": [
+      {
+        "title": "Server",
+        "company": "Local Restaurant",
+        "location": "Bronx, NY",
+        "startDate": "2023-09",
+        "endDate": "present",
+        "description": [
+          "Take customer orders and serve food",
+          "Handle cash and credit card payments",
+          "Work with kitchen staff to ensure timely service",
+          "Clean tables and maintain dining area"
+        ]
+      },
+      {
+        "title": "Cashier",
+        "company": "Grocery Store",
+        "location": "Bronx, NY",
+        "startDate": "2023-01",
+        "endDate": "2023-08",
+        "description": [
+          "Scan items and process payments",
+          "Provide basic customer service",
+          "Keep checkout area organized",
+          "Count cash drawer at end of shift"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "High School Diploma",
+        "institution": "Bronx High School",
+        "graduationDate": "2022-06"
+      }
+    ],
+    "skills": [
+      "Cash Handling",
+      "Customer Service",
+      "Punctual",
+      "Reliable",
+      "Fast Learner"
+    ]
+  }
+}

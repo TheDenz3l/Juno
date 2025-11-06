@@ -6,7 +6,7 @@ import { ATSScoreDisplay } from '@/components/ATSScoreDisplay'
 import { EditSuggestions } from '@/components/EditSuggestions'
 import { generateEditSuggestions, type EditSuggestion } from '@/lib/edit-suggestions'
 import { calculateATSScore } from '@/lib/ats-matcher'
-import { getCurrentUser, getProfile } from '@/lib/supabase'
+import { getCurrentUser, getProfile, getAuthToken } from '@/lib/supabase'
 import { applyEditSuggestion } from '@/lib/resume-updater'
 import { saveJobPosting, getAllJobPostings, getJobPosting } from '@/lib/db'
 import type { Application, JobPosting } from '@/types'
@@ -193,8 +193,11 @@ function App() {
         setIsCalculatingATS(true)
         setATSCalculationStatus('Analyzing job description...')
         try {
-          // Calculate ATS score (now using ML-powered extraction)
-          const score = await calculateATSScore(activeResume, currentJob)
+          // Get auth token for Grok API
+          const authToken = await getAuthToken()
+
+          // Calculate ATS score (now using Grok-powered extraction)
+          const score = await calculateATSScore(activeResume, currentJob, authToken || undefined)
 
           if (!cancelled) {
             setATSScore(score)

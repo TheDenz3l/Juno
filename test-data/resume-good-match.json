@@ -1,0 +1,63 @@
+{
+  "id": "resume-good",
+  "name": "Good Match Resume",
+  "fileName": "good_match_resume.pdf",
+  "uploadedAt": "2025-11-05T12:00:00Z",
+  "updatedAt": "2025-11-05T12:00:00Z",
+  "sections": {
+    "contact": {
+      "name": "Jordan Chen",
+      "email": "jordan.chen@email.com",
+      "phone": "(555) 987-6543",
+      "location": "Brooklyn, NY"
+    },
+    "summary": "Motivated sales professional with 2.5 years of retail experience. Strong customer service skills and ability to work in team environments. Eager to grow career in luxury retail sector.",
+    "experience": [
+      {
+        "title": "Sales Associate",
+        "company": "Mid-Range Fashion Store",
+        "location": "New York, NY",
+        "startDate": "2022-06",
+        "endDate": "present",
+        "description": [
+          "Assist customers with product selection and provide recommendations",
+          "Meet monthly sales goals through effective communication",
+          "Process payments using point-of-sale system",
+          "Work collaboratively with team members to maintain store appearance",
+          "Handle customer inquiries and resolve issues promptly",
+          "Available for flexible scheduling including weekends"
+        ]
+      },
+      {
+        "title": "Retail Assistant",
+        "company": "Department Store",
+        "location": "Queens, NY",
+        "startDate": "2022-01",
+        "endDate": "2022-05",
+        "description": [
+          "Provided customer service in busy retail environment",
+          "Processed transactions and maintained cash register accuracy",
+          "Stocked shelves and organized merchandise displays",
+          "Assisted with inventory counts and stock management"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "Associate Degree in Business",
+        "institution": "LaGuardia Community College",
+        "graduationDate": "2021-12"
+      }
+    ],
+    "skills": [
+      "Customer Service",
+      "POS Systems",
+      "Communication",
+      "Teamwork",
+      "Cash Handling",
+      "Time Management",
+      "Microsoft Office",
+      "Problem Solving"
+    ]
+  }
+}

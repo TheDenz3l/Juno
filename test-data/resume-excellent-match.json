@@ -1,0 +1,85 @@
+{
+  "id": "resume-excellent",
+  "name": "Excellent Match Resume",
+  "fileName": "excellent_match_resume.pdf",
+  "uploadedAt": "2025-11-05T12:00:00Z",
+  "updatedAt": "2025-11-05T12:00:00Z",
+  "sections": {
+    "contact": {
+      "name": "Alex Rivera",
+      "email": "alex.rivera@email.com",
+      "phone": "(555) 123-4567",
+      "location": "New York, NY"
+    },
+    "summary": "Results-driven Sales Associate with 4+ years of experience in luxury retail environments. Proven track record of exceeding sales targets by 25% consistently. Bilingual in English and Spanish with expertise in CRM systems including Salesforce. Passionate about delivering exceptional customer experiences and building lasting client relationships.",
+    "experience": [
+      {
+        "title": "Senior Sales Associate",
+        "company": "Luxury Brand Boutique",
+        "location": "New York, NY",
+        "startDate": "2022-01",
+        "endDate": "present",
+        "description": [
+          "Consistently exceed monthly sales targets by 30%, generating over $500K in annual revenue",
+          "Utilize Salesforce CRM to manage customer relationships and track sales pipeline, resulting in 40% increase in repeat customers",
+          "Process transactions using mobile POS systems with 99.9% accuracy in cash handling",
+          "Train and mentor 5 junior sales associates on product knowledge and sales techniques",
+          "Maintain visual merchandising standards across 3,000 sq ft retail space",
+          "Resolve customer complaints and conflicts with 95% satisfaction rate",
+          "Collaborate with team of 12 to achieve store goals and ensure smooth operations"
+        ]
+      },
+      {
+        "title": "Sales Associate",
+        "company": "High-End Fashion Retailer",
+        "location": "New York, NY",
+        "startDate": "2021-03",
+        "endDate": "2021-12",
+        "description": [
+          "Delivered exceptional customer service in fast-paced luxury retail environment",
+          "Achieved 120% of sales targets through active listening and product recommendations",
+          "Operated POS system for transaction processing and inventory management",
+          "Built strong customer relationships through excellent communication and follow-up",
+          "Demonstrated adaptability by working flexible schedules including evenings and weekends",
+          "Maintained in-depth product knowledge across multiple luxury brand lines"
+        ]
+      }
+    ],
+    "education": [
+      {
+        "degree": "Bachelor of Arts in Marketing",
+        "institution": "New York University",
+        "graduationDate": "2020-05",
+        "gpa": 3.6
+      }
+    ],
+    "skills": [
+      "Salesforce CRM",
+      "Mobile POS Systems",
+      "Customer Service Excellence",
+      "Sales Techniques",
+      "Cash Handling",
+      "Conflict Resolution",
+      "Team Collaboration",
+      "Visual Merchandising",
+      "Product Knowledge",
+      "Inventory Management",
+      "Time Management",
+      "Active Listening",
+      "Problem Solving",
+      "Bilingual (English/Spanish)"
+    ],
+    "certifications": [
+      {
+        "name": "Customer Service Excellence Certification",
+        "issuer": "National Retail Federation",
+        "date": "2022-06"
+      },
+      {
+        "name": "Luxury Retail Management Certificate",
+        "issuer": "Fashion Institute of Technology",
+        "date": "2021-09"
+      }
+    ]
+  }
+}

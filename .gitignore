@@ -41,13 +41,15 @@ coverage/
 tmp/
 temp/
 *.tmp
+.cache/
 
 # Supabase
 .supabase/
+supabase/.temp/
+bin/
 
 # Model files (will be downloaded at runtime)
-public/models/*.onnx
-public/models/*.json
+public/models/
 
 # Local data
 *.sqlite

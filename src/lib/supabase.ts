@@ -50,6 +50,13 @@ export async function getCurrentUser() {
   return user
 }
 
+export async function getAuthToken(): Promise<string | null> {
+  if (!supabase) return null
+
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.access_token || null
+}
+
 export async function getProfile(userId: string) {
   if (!supabase) throw new Error('Supabase not configured')
 
