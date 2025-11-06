@@ -148,20 +148,34 @@ export function ATSScoreDisplay({ score, isCalculating, calculationStatus, onTog
       <div className="mt-6 pt-6 border-t border-gray-200">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Detailed Analysis</h3>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Hard Skills</span>
-            <span className="text-sm font-medium">
+        <div className="space-y-4">
+          <div className="flex justify-between gap-4">
+            <div className="max-w-xs">
+              <span className="block text-sm text-gray-600">Hard Skills</span>
+              <p className="text-xs text-gray-500 leading-snug">
+                Grok's ATS scan compared the job's required hard-skill keywords to your resume and found matches for {score.analysis.hardSkills.matched.length} of {score.analysis.hardSkills.matched.length + score.analysis.hardSkills.missing.length}.
+              </p>
+            </div>
+            <span className="text-sm font-medium whitespace-nowrap">
               {score.analysis.hardSkills.matched.length} / {score.analysis.hardSkills.matched.length + score.analysis.hardSkills.missing.length}
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Soft Skills</span>
-            <span className="text-sm font-medium">
+          <div className="flex justify-between gap-4">
+            <div className="max-w-xs">
+              <span className="block text-sm text-gray-600">Soft Skills</span>
+              <p className="text-xs text-gray-500 leading-snug">
+                It also measured soft-skill language in your resume against what the ATS pulled from the job post, matching {score.analysis.softSkills.matched.length} of {score.analysis.softSkills.matched.length + score.analysis.softSkills.missing.length}.
+              </p>
+            </div>
+            <span className="text-sm font-medium whitespace-nowrap">
               {score.analysis.softSkills.matched.length} / {score.analysis.softSkills.matched.length + score.analysis.softSkills.missing.length}
             </span>
           </div>
+
+          <p className="text-xs text-gray-500">
+            Both ratios feed into the overall ATS match score shown above.
+          </p>
         </div>
       </div>
     </div>

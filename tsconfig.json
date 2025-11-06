@@ -29,7 +29,7 @@
     /* Chrome Extension */
     "types": ["chrome", "vite/client"]
   },
-  "include": ["src"],
+  "include": ["src", "tests"],
   "exclude": [".eslintrc.cjs", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
