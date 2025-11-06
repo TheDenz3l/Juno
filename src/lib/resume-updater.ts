@@ -1,5 +1,6 @@
 import { Resume } from '@/types'
 import { EditSuggestion } from './edit-suggestions'
+import { buildResumeContent } from './resume-utils'
 
 /**
  * Apply an edit suggestion to a resume's content
@@ -75,11 +76,8 @@ export function applyEditSuggestion(resume: Resume, suggestion: EditSuggestion):
     )
   }
 
-  // Update the full content text as well
-  updatedResume.content = updatedResume.content.replace(
-    suggestion.original,
-    suggestion.suggestion
-  )
+  // Rebuild resume content to keep manual edits and structured sections in sync
+  updatedResume.content = buildResumeContent(updatedResume)
 
   // Update timestamp
   updatedResume.updatedAt = new Date()

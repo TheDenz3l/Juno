@@ -7,9 +7,17 @@ interface Props {
   calculationStatus?: string
   onToggleHighlighting?: () => void
   isHighlightingEnabled?: boolean
+  onInsertKeyword?: (keyword: string) => void
 }
 
-export function ATSScoreDisplay({ score, isCalculating, calculationStatus, onToggleHighlighting, isHighlightingEnabled }: Props) {
+export function ATSScoreDisplay({
+  score,
+  isCalculating,
+  calculationStatus,
+  onToggleHighlighting,
+  isHighlightingEnabled,
+  onInsertKeyword,
+}: Props) {
   if (isCalculating) {
     return (
       <div className="card">
@@ -134,8 +142,14 @@ export function ATSScoreDisplay({ score, isCalculating, calculationStatus, onTog
             {score.missingKeywords.map((keyword, index) => (
               <button
                 key={index}
-                className="px-2 py-1 bg-warning-100 text-warning-700 rounded text-xs hover:bg-warning-200 transition-colors"
-                title="Click to add to resume"
+                onClick={() => onInsertKeyword?.(keyword)}
+                disabled={!onInsertKeyword}
+                className={`px-2 py-1 rounded text-xs transition-colors ${
+                  onInsertKeyword
+                    ? 'bg-warning-100 text-warning-700 hover:bg-warning-200'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+                title={onInsertKeyword ? 'Click to add to resume' : 'Keyword insertion unavailable'}
               >
                 {keyword}
               </button>

@@ -94,6 +94,11 @@ export default defineConfig({
       '@': resolve(__dirname, './src')
     }
   },
+  test: {
+    include: ['tests/**/*.{test,spec}.{ts,tsx}', 'src/**/*.{test,spec}.{ts,tsx}'],
+    environment: 'node',
+    globals: true,
+  },
   build: {
     outDir: 'dist',
     sourcemap: process.env.NODE_ENV === 'development',

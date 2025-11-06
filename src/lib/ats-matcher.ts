@@ -319,25 +319,39 @@ export async function calculateATSScore(
   userAuthToken?: string
 ): Promise<ATSScore> {
 
-  // Extract keywords from job description using Grok AI
+  // Determine how we should source keywords.
+  const preferLocal = import.meta.env.VITE_ATS_PREFER_LOCAL === 'true'
+  const grokEnabled = import.meta.env.VITE_ATS_ENABLE_GROK !== 'false'
+
   let jobHardSkills: string[] = []
   let jobSoftSkills: string[] = []
+  let grokUsed = false
 
-  // Always try Grok first (works with or without auth token)
-  try {
-    console.log('[ATS Matcher] Attempting Grok extraction...',
-      userAuthToken ? '(authenticated)' : '(unauthenticated)')
+  if (grokEnabled && !preferLocal) {
+    try {
+      console.log(
+        '[ATS Matcher] Extracting keywords with Grok 4 first…',
+        userAuthToken ? '(authenticated)' : '(unauthenticated)'
+      )
 
-    const { hardSkills, softSkills } = await extractKeywordsWithGrok(job.description, userAuthToken)
-    jobHardSkills = hardSkills
-    jobSoftSkills = softSkills
-  } catch (error) {
-    console.error('[ATS Matcher] Grok extraction failed, falling back to simple extraction:', error)
-    // Fallback to simple extraction if Grok fails
-    const jobKeywords = extractKeywords(job.description)
-    const categorized = categorizeKeywords(jobKeywords)
-    jobHardSkills = categorized.hardSkills
-    jobSoftSkills = categorized.softSkills
+      const { hardSkills, softSkills } = await extractKeywordsWithGrok(job.description, userAuthToken)
+
+      if (hardSkills.length || softSkills.length) {
+        jobHardSkills = deduplicateKeywords(hardSkills)
+        jobSoftSkills = deduplicateKeywords(softSkills)
+        grokUsed = true
+      }
+    } catch (error) {
+      console.warn('[ATS Matcher] Grok extraction failed, falling back to local:', error)
+    }
+  }
+
+  if (!grokUsed) {
+    const localJobKeywords = extractKeywords(job.description)
+    const localCategorized = categorizeKeywords(localJobKeywords)
+
+    jobHardSkills = deduplicateKeywords(localCategorized.hardSkills)
+    jobSoftSkills = deduplicateKeywords(localCategorized.softSkills)
   }
 
   // Extract keywords from resume (use rule-based for resume for consistency)
@@ -551,13 +565,15 @@ export function extractExperienceRequirements(text: string): Array<{ skill: stri
 
 // Extract keywords from text with frequency tracking
 function extractKeywords(text: string): string[] {
+  const sanitizedText = preprocessJobText(text)
+
   // FIRST: Extract critical technical phrases to preserve them intact
   const criticalPhrases: string[] = []
   const criticalMatches = new Set<string>()
 
   CRITICAL_PHRASE_PATTERNS.forEach(pattern => {
     pattern.lastIndex = 0
-    const matches = text.match(pattern) || []
+    const matches = sanitizedText.match(pattern) || []
     matches.forEach(match => {
       const normalized = normalizeKeyword(match)
       if (!criticalMatches.has(normalized)) {
@@ -568,7 +584,7 @@ function extractKeywords(text: string): string[] {
   })
 
   // Remove critical phrases from text to prevent duplicate extraction as split words
-  let textWithoutCriticalPhrases = text
+  let textWithoutCriticalPhrases = sanitizedText
   criticalPhrases.forEach(phrase => {
     // Replace with placeholder to preserve word boundaries
     textWithoutCriticalPhrases = textWithoutCriticalPhrases.replace(
@@ -594,18 +610,23 @@ function extractKeywords(text: string): string[] {
   const frequencyMap = new Map<string, { original: string; count: number }>()
 
   allKeywords.forEach(keyword => {
-    const normalized = normalizeKeyword(keyword)
+    const cleaned = cleanupKeyword(keyword)
+    if (!cleaned) {
+      return
+    }
+
+    const normalized = normalizeKeyword(cleaned)
 
     // Skip placeholder tokens
     if (normalized === '__removed__' || normalized === 'removed') return
 
     // CRITICAL: Filter out multi-line blocks and excessively long "keywords"
-    if (keyword.includes('\n') || keyword.length > 50) {
+    if (cleaned.includes('\n') || cleaned.length > 50) {
       return
     }
 
     // Filter boilerplate phrases
-    const lowerKeyword = keyword.toLowerCase()
+    const lowerKeyword = cleaned.toLowerCase()
     const boilerplatePatterns = [
       'about us', 'we are', 'we offer', 'our company', 'the company',
       'equal opportunity', 'we celebrate', 'we partner', 'join our',
@@ -616,8 +637,8 @@ function extractKeywords(text: string): string[] {
     }
 
     // Validate the keyword first
-    const isPhrase = keyword.includes(' ') || keyword.includes('-')
-    const isValid = isPhrase ? isValidPhrase(keyword) : isMeaningfulKeyword(keyword)
+    const isPhrase = cleaned.includes(' ') || cleaned.includes('-')
+    const isValid = isPhrase ? isValidPhrase(cleaned) : isMeaningfulKeyword(cleaned)
 
     if (!isValid) return
 
@@ -625,7 +646,7 @@ function extractKeywords(text: string): string[] {
       const entry = frequencyMap.get(normalized)!
       entry.count++
     } else {
-      frequencyMap.set(normalized, { original: keyword, count: 1 })
+      frequencyMap.set(normalized, { original: cleaned, count: 1 })
     }
   })
 
@@ -646,6 +667,46 @@ function extractKeywords(text: string): string[] {
     .slice(0, Math.max(50, frequentKeywords.length * 3))
 
   return [...frequentKeywords, ...singleKeywords]
+}
+
+function preprocessJobText(text: string): string {
+  if (!text) return ''
+
+  return text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\b([a-z]{2,})'s\b/gi, '$1')
+    .replace(/\b's\b/gi, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&mdash;/gi, ' - ')
+}
+
+function cleanupKeyword(keyword: string): string {
+  if (!keyword) return ''
+
+  let cleaned = keyword
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/\b([a-z]{2,})'s\b/gi, '$1')
+    .replace(/\b's\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  cleaned = cleaned
+    .replace(/^[^a-z0-9.+#/-]+/i, '')
+    .replace(/[^a-z0-9.+#/-]+$/i, '')
+
+  const parts = cleaned.split(' ')
+  if (parts.length > 1 && parts[0].length === 1) {
+    parts.shift()
+    cleaned = parts.join(' ').trim()
+  }
+
+  cleaned = cleaned.trim()
+
+  if (cleaned.length <= 1) {
+    return ''
+  }
+
+  return cleaned
 }
 
 // Categorize keywords into hard/soft skills
